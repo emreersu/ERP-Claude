@@ -1,23 +1,39 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 import { PR_STATUS_LABELS, type PurchaseRequisition } from '../types'
 
 export function Requisitions() {
   const [items, setItems] = useState<PurchaseRequisition[]>([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+  const { profile } = useAuth()
 
-  useEffect(() => {
-    supabase
+  async function load() {
+    const { data } = await supabase
       .from('purchase_requisitions')
       .select('*')
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
-        setItems((data as PurchaseRequisition[]) ?? [])
-        setLoading(false)
-      })
-  }, [])
+    setItems((data as PurchaseRequisition[]) ?? [])
+    setLoading(false)
+  }
+
+  useEffect(() => { load() }, [])
+
+  async function approve(id: string) {
+    await supabase.from('purchase_requisitions').update({ durum: 'onaylandi' }).eq('id', id)
+    load()
+  }
+
+  async function reject(id: string) {
+    const reason = prompt('Red açıklaması:')
+    if (reason === null) return
+    await supabase.from('purchase_requisitions').update({ durum: 'reddedildi', red_aciklamasi: reason }).eq('id', id)
+    load()
+  }
+
+  const canApprove = profile?.rol === 'yonetici' || profile?.rol === 'satin_alma'
 
   return (
     <div>
@@ -43,19 +59,20 @@ export function Requisitions() {
               <th className="px-4 py-2">Öncelik</th>
               <th className="px-4 py-2">Tarih</th>
               <th className="px-4 py-2">Durum</th>
+              {canApprove && <th className="px-4 py-2">Onay</th>}
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
                   Yükleniyor…
                 </td>
               </tr>
             )}
             {!loading && items.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
                   Henüz talep yok.
                 </td>
               </tr>
@@ -69,6 +86,18 @@ export function Requisitions() {
                 <td className="px-4 py-2">
                   <span className="badge bg-slate-100 text-slate-700">{PR_STATUS_LABELS[t.durum]}</span>
                 </td>
+                {canApprove && (
+                  <td className="px-4 py-2">
+                    {t.durum === 'onay_bekliyor' ? (
+                      <div className="flex gap-1">
+                        <button onClick={() => approve(t.id)} className="rounded bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100">Onayla</button>
+                        <button onClick={() => reject(t.id)} className="rounded bg-red-50 px-2 py-1 text-xs text-red-700 hover:bg-red-100">Reddet</button>
+                      </div>
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
