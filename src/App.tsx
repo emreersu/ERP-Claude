@@ -11,6 +11,7 @@ import { NewQuotation } from './pages/NewQuotation'
 import { EditQuotation } from './pages/EditQuotation'
 import { CompareQuotations } from './pages/CompareQuotations'
 import { PurchaseOrders } from './pages/PurchaseOrders'
+import { PurchaseOrderDetail } from './pages/PurchaseOrderDetail'
 import { NewPurchaseOrder } from './pages/NewPurchaseOrder'
 import { GoodsReceipts } from './pages/GoodsReceipts'
 import { NewGoodsReceipt } from './pages/NewGoodsReceipt'
@@ -56,6 +57,7 @@ function AppRoutes() {
         <Route path="/teklifler/karsilastir" element={<CompareQuotations />} />
 
         <Route path="/siparisler" element={<PurchaseOrders />} />
+        <Route path="/siparisler/:id" element={<PurchaseOrderDetail />} />
         <Route path="/siparisler/yeni" element={<NewPurchaseOrder />} />
         <Route path="/siparisler/takip" element={<PurchaseOrders />} />
 
