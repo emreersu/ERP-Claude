@@ -36,7 +36,7 @@ export function NewGoodsReceipt() {
       .insert({
         po_id: selectedPo.id,
         kabul_eden: profile.id,
-        durum: anyEksik ? 'kismi_kabul' : 'tam_kabul',
+        durum: 'bekliyor',
         miktar_uygun: !anyEksik,
         urun_uygun: true,
         fiziksel_durum_uygun: true,
@@ -55,7 +55,8 @@ export function NewGoodsReceipt() {
           hasarli_miktar: hasarli[item.id] ?? 0,
         }))
       )
-      // durumu tekrar update ederek stok trigger'ını tetikle (insert sonrası ayrı update gerekiyor)
+      // Kalemler eklendikten SONRA durumu değiştiriyoruz — stok güncelleme
+      // tetikleyicisi ancak durum gerçekten değişince çalışıyor (bekliyor → tam/kısmi kabul)
       await supabase.from('goods_receipts').update({ durum: anyEksik ? 'kismi_kabul' : 'tam_kabul' }).eq('id', gr.id)
     }
     setSaving(false)
