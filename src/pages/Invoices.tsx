@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { FATURA_DURUMU_LABELS, ODEME_DURUMU_LABELS, type Invoice } from '../types'
 
 export function Invoices() {
   const [items, setItems] = useState<Invoice[]>([])
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   async function load() {
     const { data } = await supabase.from('invoices').select('*, suppliers(*), purchase_orders(*)').order('created_at', { ascending: false })
@@ -26,8 +28,15 @@ export function Invoices() {
 
   return (
     <div>
-      <h1 className="mb-1 text-xl font-semibold text-bt-navy-900">Fatura yönetimi</h1>
-      <p className="mb-6 text-sm text-slate-500 font-mono">INV02</p>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-bt-navy-900">Fatura yönetimi</h1>
+          <p className="text-sm text-slate-500 font-mono">INV02</p>
+        </div>
+        <button onClick={() => navigate('/faturalar/yeni')} className="rounded-md bg-bt-navy-800 px-4 py-2 text-sm text-white hover:bg-bt-navy-700">
+          <i className="ti ti-plus" aria-hidden="true" /> Yeni fatura (INV01)
+        </button>
+      </div>
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <table className="w-full text-left text-sm">
