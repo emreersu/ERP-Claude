@@ -46,11 +46,12 @@ export function Quotations() {
               <th className="px-4 py-2">Kalemler</th>
               <th className="px-4 py-2">Toplam</th>
               <th className="px-4 py-2">Durum</th>
+              <th className="px-4 py-2">İşlem</th>
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={6} className="px-4 py-6 text-center text-slate-400">Yükleniyor…</td></tr>}
-            {!loading && items.length === 0 && <tr><td colSpan={6} className="px-4 py-6 text-center text-slate-400">Henüz teklif yok.</td></tr>}
+            {loading && <tr><td colSpan={7} className="px-4 py-6 text-center text-slate-400">Yükleniyor…</td></tr>}
+            {!loading && items.length === 0 && <tr><td colSpan={7} className="px-4 py-6 text-center text-slate-400">Henüz teklif yok.</td></tr>}
             {items.map((q) => {
               const toplam = (q.items ?? []).reduce((sum, i) => sum + i.miktar * i.birim_fiyat, 0)
               return (
@@ -65,6 +66,13 @@ export function Quotations() {
                       <span className="badge bg-green-50 text-green-700">Seçildi</span>
                     ) : (
                       <span className="badge bg-slate-100 text-slate-600">Değerlendiriliyor</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2">
+                    {!q.secilen && (
+                      <button onClick={() => navigate(`/teklifler/${q.id}/duzenle`)} className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-700 hover:bg-slate-200">
+                        <i className="ti ti-pencil" aria-hidden="true" /> Düzenle
+                      </button>
                     )}
                   </td>
                 </tr>
