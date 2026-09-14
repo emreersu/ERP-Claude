@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { PO_STATUS_LABELS, type PurchaseOrder } from '../types'
@@ -7,6 +8,7 @@ export function PurchaseOrders() {
   const [items, setItems] = useState<PurchaseOrder[]>([])
   const [loading, setLoading] = useState(true)
   const { profile } = useAuth()
+  const navigate = useNavigate()
   const canApprove = profile?.rol === 'yonetici' || profile?.rol === 'satin_alma'
 
   async function load() {
@@ -50,12 +52,13 @@ export function PurchaseOrders() {
               <th className="px-4 py-2">Tarih</th>
               <th className="px-4 py-2">Toplam</th>
               <th className="px-4 py-2">Durum</th>
+              <th className="px-4 py-2"></th>
               {canApprove && <th className="px-4 py-2">Onay</th>}
             </tr>
           </thead>
           <tbody>
-            {loading && <tr><td colSpan={6} className="px-4 py-6 text-center text-slate-400">Yükleniyor…</td></tr>}
-            {!loading && items.length === 0 && <tr><td colSpan={6} className="px-4 py-6 text-center text-slate-400">Henüz PO yok. Bir teklifi karşılaştırma ekranından seçerek oluşturabilirsiniz.</td></tr>}
+            {loading && <tr><td colSpan={7} className="px-4 py-6 text-center text-slate-400">Yükleniyor…</td></tr>}
+            {!loading && items.length === 0 && <tr><td colSpan={7} className="px-4 py-6 text-center text-slate-400">Henüz PO yok. Bir teklifi karşılaştırma ekranından seçerek oluşturabilirsiniz.</td></tr>}
             {items.map((po) => (
               <tr key={po.id} className="border-t border-slate-100 hover:bg-slate-50">
                 <td className="px-4 py-2 font-mono text-xs text-bt-navy-700">{po.po_no}</td>
@@ -63,6 +66,11 @@ export function PurchaseOrders() {
                 <td className="px-4 py-2">{new Date(po.siparis_tarihi).toLocaleDateString('tr-TR')}</td>
                 <td className="px-4 py-2">{po.genel_toplam.toLocaleString('tr-TR')} TL</td>
                 <td className="px-4 py-2"><span className="badge bg-slate-100 text-slate-700">{PO_STATUS_LABELS[po.durum]}</span></td>
+                <td className="px-4 py-2">
+                  <button onClick={() => navigate(`/siparisler/${po.id}`)} className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-700 hover:bg-slate-200">
+                    Detay / Kargo
+                  </button>
+                </td>
                 {canApprove && (
                   <td className="px-4 py-2">
                     {po.durum === 'onay_bekliyor' || po.durum === 'taslak' ? (
