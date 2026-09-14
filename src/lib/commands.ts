@@ -62,7 +62,7 @@ export const QUICK_COMMANDS: QuickCommand[] = [
   },
   {
     code: 'GR01', title: 'Mal Kabul', description: 'Gelen teslimatı mal kabul ekranından işle',
-    path: '/mal-kabul/yeni', allowedRoles: ['depo', 'yonetici'],
+    path: '/mal-kabul/yeni', allowedRoles: ['depo', 'satin_alma', 'yonetici'],
     sapKarsiligi: 'MIGO (Goods Movement / Goods Receipt)',
     ogrenmeNotu: 'SAP\'nin en bilinen T-code\'larından biri. Mal fiziksel olarak geldiğinde burada "kabul edildi" denir ve bu an itibariyle stok otomatik artar.',
   },
@@ -104,7 +104,7 @@ export const QUICK_COMMANDS: QuickCommand[] = [
   },
   {
     code: 'INV01', title: 'Fatura Girişi', description: 'Gelen faturayı PO ve mal kabul ile eşleştirerek kaydet',
-    path: '/faturalar/yeni', allowedRoles: ['muhasebe', 'yonetici'],
+    path: '/faturalar/yeni', allowedRoles: ['muhasebe', 'satin_alma', 'yonetici'],
     sapKarsiligi: 'MIRO (Invoice Verification)',
     ogrenmeNotu: 'SAP\'nin "üç yönlü kontrol" (3-way match) mantığı: PO + Mal Kabul + Fatura tutarları karşılaştırılır. Uyuşmazsa sistem uyarır — muhasebede en kritik kontrol noktalarından biridir.',
   },
