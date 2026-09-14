@@ -7,6 +7,7 @@ export function PurchaseOrders() {
   const [items, setItems] = useState<PurchaseOrder[]>([])
   const [loading, setLoading] = useState(true)
   const { profile } = useAuth()
+  const canApprove = profile?.rol === 'yonetici' || profile?.rol === 'satin_alma'
 
   async function load() {
     const { data } = await supabase
@@ -49,7 +50,7 @@ export function PurchaseOrders() {
               <th className="px-4 py-2">Tarih</th>
               <th className="px-4 py-2">Toplam</th>
               <th className="px-4 py-2">Durum</th>
-              {profile?.rol === 'yonetici' && <th className="px-4 py-2">Onay</th>}
+              {canApprove && <th className="px-4 py-2">Onay</th>}
             </tr>
           </thead>
           <tbody>
@@ -62,7 +63,7 @@ export function PurchaseOrders() {
                 <td className="px-4 py-2">{new Date(po.siparis_tarihi).toLocaleDateString('tr-TR')}</td>
                 <td className="px-4 py-2">{po.genel_toplam.toLocaleString('tr-TR')} TL</td>
                 <td className="px-4 py-2"><span className="badge bg-slate-100 text-slate-700">{PO_STATUS_LABELS[po.durum]}</span></td>
-                {profile?.rol === 'yonetici' && (
+                {canApprove && (
                   <td className="px-4 py-2">
                     {po.durum === 'onay_bekliyor' || po.durum === 'taslak' ? (
                       <div className="flex gap-1">
