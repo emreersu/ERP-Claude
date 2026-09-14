@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { ProductPicker, type PickedProduct } from '../components/ProductPicker'
 import type { Supplier } from '../types'
 
-interface Kalem { aciklama: string; miktar: number; birim_fiyat: number }
+interface Kalem { product: PickedProduct | null; miktar: number; birim_fiyat: number }
 
 export function NewPurchaseOrder() {
   const { profile } = useAuth()
@@ -13,8 +14,9 @@ export function NewPurchaseOrder() {
   const [supplierId, setSupplierId] = useState('')
   const [siparisYontemi, setSiparisYontemi] = useState('sistem')
   const [odemeVadesi, setOdemeVadesi] = useState('')
-  const [kalemler, setKalemler] = useState<Kalem[]>([{ aciklama: '', miktar: 1, birim_fiyat: 0 }])
+  const [kalemler, setKalemler] = useState<Kalem[]>([{ product: null, miktar: 1, birim_fiyat: 0 }])
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     supabase.from('suppliers').select('*').eq('aktif', true).order('firma_adi').then(({ data }) => setSuppliers((data as Supplier[]) ?? []))
@@ -30,7 +32,14 @@ export function NewPurchaseOrder() {
 
   async function handleSubmit() {
     if (!profile || !supplierId) return
+    const gecerli = kalemler.filter((k) => k.product)
+    if (gecerli.length === 0) {
+      setError('En az bir kalem için ürün seçilmelidir.')
+      return
+    }
     setSaving(true)
+    setError(null)
+
     const { data: po } = await supabase.from('purchase_orders').insert({
       supplier_id: supplierId,
       siparis_yontemi: siparisYontemi,
@@ -44,8 +53,12 @@ export function NewPurchaseOrder() {
 
     if (po) {
       await supabase.from('purchase_order_items').insert(
-        kalemler.filter((k) => k.aciklama.trim()).map((k) => ({
-          po_id: po.id, aciklama: k.aciklama, miktar: k.miktar, birim_fiyat: k.birim_fiyat,
+        gecerli.map((k) => ({
+          po_id: po.id,
+          product_id: k.product!.id,
+          aciklama: k.product!.urun_adi,
+          miktar: k.miktar,
+          birim_fiyat: k.birim_fiyat,
         }))
       )
     }
@@ -83,15 +96,16 @@ export function NewPurchaseOrder() {
       </div>
 
       <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="mb-3 text-sm font-semibold text-bt-navy-900">Kalemler</h2>
+        <h2 className="mb-1 text-sm font-semibold text-bt-navy-900">Kalemler</h2>
+        <p className="mb-3 text-xs text-slate-400">Malzeme kütüğünden ürün seç — SAP'de olduğu gibi serbest metin girilmez.</p>
         {kalemler.map((k, i) => (
           <div key={i} className="mb-2 flex gap-2">
-            <input value={k.aciklama} onChange={(e) => updateKalem(i, { aciklama: e.target.value })} placeholder="Ürün açıklaması" className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <ProductPicker value={k.product} onChange={(p) => updateKalem(i, { product: p })} />
             <input type="number" min={1} value={k.miktar} onChange={(e) => updateKalem(i, { miktar: Number(e.target.value) })} className="w-24 rounded-md border border-slate-300 px-3 py-2 text-sm" />
             <input type="number" value={k.birim_fiyat} onChange={(e) => updateKalem(i, { birim_fiyat: Number(e.target.value) })} className="w-32 rounded-md border border-slate-300 px-3 py-2 text-sm" placeholder="Birim fiyat" />
           </div>
         ))}
-        <button onClick={() => setKalemler((p) => [...p, { aciklama: '', miktar: 1, birim_fiyat: 0 }])} className="mt-1 text-sm text-bt-navy-700 hover:underline">
+        <button onClick={() => setKalemler((p) => [...p, { product: null, miktar: 1, birim_fiyat: 0 }])} className="mt-1 text-sm text-bt-navy-700 hover:underline">
           <i className="ti ti-plus" aria-hidden="true" /> Kalem ekle
         </button>
 
@@ -101,6 +115,8 @@ export function NewPurchaseOrder() {
           <p className="font-semibold text-bt-navy-900">Genel toplam: {genelToplam.toLocaleString('tr-TR')} TL</p>
         </div>
       </div>
+
+      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
       <button onClick={handleSubmit} disabled={saving || !supplierId} className="rounded-md bg-bt-navy-800 px-5 py-2 text-sm font-medium text-white hover:bg-bt-navy-700 disabled:opacity-60">
         {saving ? 'Kaydediliyor…' : 'PO oluştur (onaya gönder)'}
