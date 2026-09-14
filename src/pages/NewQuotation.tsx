@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { ProductPicker, type PickedProduct } from '../components/ProductPicker'
 import type { Supplier, TeklifKaynagi } from '../types'
 import { TEKLIF_KAYNAGI_LABELS } from '../types'
 
 interface Kalem {
-  urun_aciklama: string
+  product: PickedProduct | null
   miktar: number
   birim_fiyat: number
 }
@@ -21,7 +22,7 @@ export function NewQuotation() {
   const [odemeKosulu, setOdemeKosulu] = useState('')
   const [teslimSuresi, setTeslimSuresi] = useState<number | ''>('')
   const [notMetni, setNotMetni] = useState('')
-  const [kalemler, setKalemler] = useState<Kalem[]>([{ urun_aciklama: '', miktar: 1, birim_fiyat: 0 }])
+  const [kalemler, setKalemler] = useState<Kalem[]>([{ product: null, miktar: 1, birim_fiyat: 0 }])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -35,7 +36,7 @@ export function NewQuotation() {
     setKalemler((prev) => prev.map((k, idx) => (idx === i ? { ...k, ...patch } : k)))
   }
   function addKalem() {
-    setKalemler((prev) => [...prev, { urun_aciklama: '', miktar: 1, birim_fiyat: 0 }])
+    setKalemler((prev) => [...prev, { product: null, miktar: 1, birim_fiyat: 0 }])
   }
   function removeKalem(i: number) {
     setKalemler((prev) => prev.filter((_, idx) => idx !== i))
@@ -46,9 +47,9 @@ export function NewQuotation() {
       setError('Tedarikçi seçilmelidir.')
       return
     }
-    const gecerli = kalemler.filter((k) => k.urun_aciklama.trim())
+    const gecerli = kalemler.filter((k) => k.product)
     if (gecerli.length === 0) {
-      setError('En az bir kalem girilmelidir.')
+      setError('En az bir kalem için ürün seçilmelidir.')
       return
     }
     setSaving(true)
@@ -77,7 +78,8 @@ export function NewQuotation() {
     const { error: itemError } = await supabase.from('quotation_items').insert(
       gecerli.map((k) => ({
         quotation_id: qt.id,
-        urun_aciklama: k.urun_aciklama,
+        product_id: k.product!.id,
+        urun_aciklama: k.product!.urun_adi,
         miktar: k.miktar,
         birim_fiyat: k.birim_fiyat,
       }))
@@ -133,10 +135,11 @@ export function NewQuotation() {
       </div>
 
       <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="mb-3 text-sm font-semibold text-bt-navy-900">Kalemler</h2>
+        <h2 className="mb-1 text-sm font-semibold text-bt-navy-900">Kalemler</h2>
+        <p className="mb-3 text-xs text-slate-400">Malzeme kütüğünden ürün seç.</p>
         {kalemler.map((k, i) => (
           <div key={i} className="mb-2 flex gap-2">
-            <input value={k.urun_aciklama} onChange={(e) => updateKalem(i, { urun_aciklama: e.target.value })} placeholder="Ürün açıklaması" className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <ProductPicker value={k.product} onChange={(p) => updateKalem(i, { product: p })} />
             <input type="number" min={1} value={k.miktar} onChange={(e) => updateKalem(i, { miktar: Number(e.target.value) })} className="w-24 rounded-md border border-slate-300 px-3 py-2 text-sm" />
             <input type="number" placeholder="Birim fiyat" value={k.birim_fiyat} onChange={(e) => updateKalem(i, { birim_fiyat: Number(e.target.value) })} className="w-32 rounded-md border border-slate-300 px-3 py-2 text-sm" />
             <button onClick={() => removeKalem(i)} className="px-2 text-slate-400 hover:text-red-600"><i className="ti ti-x" aria-hidden="true" /></button>
