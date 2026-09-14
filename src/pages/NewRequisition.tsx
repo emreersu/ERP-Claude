@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { ProductPicker, type PickedProduct } from '../components/ProductPicker'
 import type { PriorityLevel } from '../types'
 
 interface Kalem {
-  aciklama: string
+  product: PickedProduct | null
   miktar: number
   tahmini_fiyat?: number
 }
@@ -16,7 +17,7 @@ export function NewRequisition() {
   const [aciklama, setAciklama] = useState('')
   const [ihtiyacTarihi, setIhtiyacTarihi] = useState('')
   const [oncelik, setOncelik] = useState<PriorityLevel>('normal')
-  const [kalemler, setKalemler] = useState<Kalem[]>([{ aciklama: '', miktar: 1 }])
+  const [kalemler, setKalemler] = useState<Kalem[]>([{ product: null, miktar: 1 }])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -25,7 +26,7 @@ export function NewRequisition() {
   }
 
   function addKalem() {
-    setKalemler((prev) => [...prev, { aciklama: '', miktar: 1 }])
+    setKalemler((prev) => [...prev, { product: null, miktar: 1 }])
   }
 
   function removeKalem(i: number) {
@@ -34,9 +35,9 @@ export function NewRequisition() {
 
   async function handleSubmit() {
     if (!profile) return
-    const gecerliKalemler = kalemler.filter((k) => k.aciklama.trim())
+    const gecerliKalemler = kalemler.filter((k) => k.product)
     if (gecerliKalemler.length === 0) {
-      setError('En az bir kalem girilmelidir.')
+      setError('En az bir kalem için ürün seçilmelidir.')
       return
     }
     setSaving(true)
@@ -63,7 +64,9 @@ export function NewRequisition() {
     const { error: itemError } = await supabase.from('purchase_requisition_items').insert(
       gecerliKalemler.map((k) => ({
         pr_id: pr.id,
-        aciklama: k.aciklama,
+        product_id: k.product!.id,
+        urun_kodu: k.product!.urun_kodu,
+        aciklama: k.product!.urun_adi,
         miktar: k.miktar,
         tahmini_fiyat: k.tahmini_fiyat ?? null,
       }))
@@ -118,15 +121,11 @@ export function NewRequisition() {
       </div>
 
       <div className="mb-6 rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="mb-3 text-sm font-semibold text-bt-navy-900">Kalemler</h2>
+        <h2 className="mb-1 text-sm font-semibold text-bt-navy-900">Kalemler</h2>
+        <p className="mb-3 text-xs text-slate-400">Malzeme kütüğünden ürün seç — SAP'de olduğu gibi serbest metin girilmez.</p>
         {kalemler.map((k, i) => (
           <div key={i} className="mb-2 flex gap-2">
-            <input
-              value={k.aciklama}
-              onChange={(e) => updateKalem(i, { aciklama: e.target.value })}
-              placeholder="Ürün / malzeme açıklaması"
-              className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
+            <ProductPicker value={k.product} onChange={(p) => updateKalem(i, { product: p })} />
             <input
               type="number"
               min={1}
