@@ -8,6 +8,7 @@ import { Requisitions } from './pages/Requisitions'
 import { NewRequisition } from './pages/NewRequisition'
 import { Quotations } from './pages/Quotations'
 import { NewQuotation } from './pages/NewQuotation'
+import { EditQuotation } from './pages/EditQuotation'
 import { CompareQuotations } from './pages/CompareQuotations'
 import { PurchaseOrders } from './pages/PurchaseOrders'
 import { NewPurchaseOrder } from './pages/NewPurchaseOrder'
@@ -51,6 +52,7 @@ function AppRoutes() {
         <Route path="/teklif-talepleri/yeni" element={<ComingSoon title="Yeni teklif talebi (RFQ01)" faz="genişletilmiş RFQ akışı" />} />
         <Route path="/teklifler" element={<Quotations />} />
         <Route path="/teklifler/yeni" element={<NewQuotation />} />
+        <Route path="/teklifler/:id/duzenle" element={<EditQuotation />} />
         <Route path="/teklifler/karsilastir" element={<CompareQuotations />} />
 
         <Route path="/siparisler" element={<PurchaseOrders />} />
